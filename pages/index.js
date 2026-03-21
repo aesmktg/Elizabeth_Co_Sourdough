@@ -193,13 +193,19 @@ export default function Home() {
   function handleSignOut() { setCustomer(null); setUserPoints(0); localStorage.removeItem('ec_customer'); setOrders([]); setView('home') }
 
   // ── Admin login ───────────────────────────────────────────────
-  async function handleAdminLogin() {
+async function handleAdminLogin() {
     setAdminLoginError('')
-    const result = await api('admin', { action:'admin_login', phone:adminLoginForm.phone, code:adminLoginForm.code })
+    const result = await api('admin', { 
+      action:'admin_login', 
+      phone:adminLoginForm.phone, 
+      password:adminLoginForm.password||'',
+      code:adminLoginForm.code 
+    })
     if (result.error) { setAdminLoginError(result.error); return }
     setAdminAuthed(true); setAdminLoginModal(false); setView('admin')
     loadAdminOrders(adminBakeDay?.id)
     loadAdminCustomers()
+  }
   }
 
   // ── Product edit ──────────────────────────────────────────────
