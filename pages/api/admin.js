@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
-import bcrypt from 'bcryptjs'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 )
 
-// Admin credentials - stored as env vars in production
 const ADMIN_PHONE = process.env.ADMIN_PHONE || '9093280992'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Ry101606'
 const ADMIN_CODE = process.env.ADMIN_CODE || '060716'
 
 export default async function handler(req, res) {
@@ -17,11 +16,11 @@ export default async function handler(req, res) {
 
   // ── ADMIN LOGIN ───────────────────────────────────────────────
   if (action === 'admin_login') {
-    const { phone, code } = req.body
-    const cleanPhone = phone.replace(/\D/g, '')
+    const { phone, password, code } = req.body
+    const cleanPhone = (phone || '').replace(/\D/g, '')
 
-    if (cleanPhone !== ADMIN_PHONE || code !== ADMIN_CODE) {
-      return res.status(401).json({ error: 'Invalid phone number or access code' })
+    if (cleanPhone !== ADMIN_PHONE || password !== ADMIN_PASSWORD || code !== ADMIN_CODE) {
+      return res.status(401).json({ error: 'Invalid credentials' })
     }
 
     return res.status(200).json({ success: true, token: 'admin-authenticated' })
@@ -54,11 +53,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true, product: data })
   }
 
-  // ── UPDATE CUSTOMER (admin) ───────────────────────────────────
+  // ── UPDATE CUSTOMER ───────────────────────────────────────────
   if (action === 'update_customer') {
     const { id, first_name, last_name, email, phone, zip_code, saved_street, saved_city, saved_zip } = req.body
 
-    const cleanPhone = phone?.replace(/\D/g, '')
+    const cleanPhone = (phone || '').replace(/\D/g, '')
 
     const { error } = await supabase
       .from('customers')
@@ -69,7 +68,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true })
   }
 
-  // ── UPDATE ADMIN PASSWORD ─────────────────────────────────────
+  // ── UPDATE ADMIN CREDENTIALS ──────────────────────────────────
   if (action === 'update_admin_password') {
     const { currentCode, newPhone, newCode } = req.body
 
@@ -77,11 +76,9 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Current access code is incorrect' })
     }
 
-    // In production these would update env vars via Vercel API
-    // For now we store in Supabase settings table
     const { error } = await supabase
       .from('admin_settings')
-      .upsert({ key: 'admin_phone', value: newPhone.replace(/\D/g, '') })
+      .upsert({ key: 'admin_phone', value: (newPhone || '').replace(/\D/g, '') })
 
     await supabase
       .from('admin_settings')
