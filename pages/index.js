@@ -1422,10 +1422,11 @@ export default function Home() {
           <div className="modal">
             <button className="modal-close" onClick={()=>setAdminLoginModal(false)}>✕</button>
             <p className="modal-title">Admin Access</p>
-            <p className="modal-sub">Enter your phone number and 4-digit access code.</p>
+            <p className="modal-sub">Enter your credentials to access the admin console.</p>
             {adminLoginError&&<div className="error-box">{adminLoginError}</div>}
             <div className="form-group"><label className="form-label">Phone number</label><input className="form-input" type="tel" value={adminLoginForm.phone} onChange={e=>setAdminLoginForm(f=>({...f,phone:e.target.value}))} placeholder="(909) 555-0000" /></div>
-            <div className="form-group"><label className="form-label">4-digit access code</label><input className="form-input" type="password" value={adminLoginForm.code} onChange={e=>setAdminLoginForm(f=>({...f,code:e.target.value}))} placeholder="••••" maxLength={4} onKeyDown={e=>e.key==='Enter'&&handleAdminLogin()} /></div>
+            <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={adminLoginForm.password||''} onChange={e=>setAdminLoginForm(f=>({...f,password:e.target.value}))} placeholder="••••••••" /></div>
+            <div className="form-group"><label className="form-label">6-digit access code</label><input className="form-input" type="password" value={adminLoginForm.code} onChange={e=>setAdminLoginForm(f=>({...f,code:e.target.value}))} placeholder="••••••" maxLength={6} onKeyDown={e=>e.key==='Enter'&&handleAdminLogin()} /></div>
             <button className="btn-large btn-large-primary" style={{width:'100%'}} onClick={handleAdminLogin}>Access Admin</button>
           </div>
         </div>
