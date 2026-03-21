@@ -1,4 +1,4 @@
-mport { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import supabase from '../api/index'
 import Head from 'next/head'
 
