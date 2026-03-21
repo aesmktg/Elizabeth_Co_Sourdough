@@ -59,7 +59,7 @@ export default function Home() {
   // ── Admin state ───────────────────────────────────────────────
   const [adminAuthed, setAdminAuthed] = useState(false)
   const [adminLoginModal, setAdminLoginModal] = useState(false)
-  const [adminLoginForm, setAdminLoginForm] = useState({ phone:'', code:'' })
+  const [adminLoginForm, setAdminLoginForm] = useState({ phone:'', password:'', code:'' })
   const [adminLoginError, setAdminLoginError] = useState('')
   const [adminTab, setAdminTab] = useState('dashboard')
   const [adminBakeDay, setAdminBakeDay] = useState(null)
@@ -195,7 +195,7 @@ export default function Home() {
   // ── Admin login ───────────────────────────────────────────────
   async function handleAdminLogin() {
     setAdminLoginError('')
-    const result = await api('admin', { action:'admin_login', phone:adminLoginForm.phone, code:adminLoginForm.code })
+    const result = await api('admin', { action:'admin_login', phone:adminLoginForm.phone, password:adminLoginForm.password||'', code:adminLoginForm.code })
     if (result.error) { setAdminLoginError(result.error); return }
     setAdminAuthed(true); setAdminLoginModal(false); setView('admin')
     loadAdminOrders(adminBakeDay?.id)
@@ -1416,21 +1416,20 @@ export default function Home() {
         </div>
       )}
 
-     {/* ══════════════════════════════════════════ ADMIN LOGIN MODAL */}
+      {/* ══════════════════════════════════════════ ADMIN LOGIN MODAL */}
       {adminLoginModal&&(
         <div className="modal-bg">
           <div className="modal">
             <button className="modal-close" onClick={()=>setAdminLoginModal(false)}>✕</button>
             <p className="modal-title">Admin Access</p>
-            <p className="modal-sub">Enter your credentials to access the admin console.</p>
+            <p className="modal-sub">Enter your phone number and 4-digit access code.</p>
             {adminLoginError&&<div className="error-box">{adminLoginError}</div>}
             <div className="form-group"><label className="form-label">Phone number</label><input className="form-input" type="tel" value={adminLoginForm.phone} onChange={e=>setAdminLoginForm(f=>({...f,phone:e.target.value}))} placeholder="(909) 555-0000" /></div>
-            <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" value={adminLoginForm.password||''} onChange={e=>setAdminLoginForm(f=>({...f,password:e.target.value}))} placeholder="••••••••" /></div>
-            <div className="form-group"><label className="form-label">6-digit access code</label><input className="form-input" type="password" value={adminLoginForm.code} onChange={e=>setAdminLoginForm(f=>({...f,code:e.target.value}))} placeholder="••••••" maxLength={6} onKeyDown={e=>e.key==='Enter'&&handleAdminLogin()} /></div>
+            <div className="form-group"><label className="form-label">4-digit access code</label><input className="form-input" type="password" value={adminLoginForm.code} onChange={e=>setAdminLoginForm(f=>({...f,code:e.target.value}))} placeholder="••••" maxLength={4} onKeyDown={e=>e.key==='Enter'&&handleAdminLogin()} /></div>
             <button className="btn-large btn-large-primary" style={{width:'100%'}} onClick={handleAdminLogin}>Access Admin</button>
           </div>
         </div>
-      )} 
+      )}
 
       {/* ══════════════════════════════════════════ PRODUCT EDIT MODAL */}
       {editProductModal&&(
