@@ -427,7 +427,8 @@ export default function Home() {
     setCart(prev => {
       const ex = prev.find(i=>i.product_id===product.id&&i.variant===variant)
       if (ex) return prev.map(i=>i.product_id===product.id&&i.variant===variant?{...i,quantity:i.quantity+1}:i)
-      return [...prev,{product_id:product.id,product_name:product.name,emoji:product.emoji,variant,quantity:1,unit_price:product.price}]
+      const variantPrice = variant && product.variant_prices?.[variant] ? parseFloat(product.variant_prices[variant]) : product.price
+      return [...prev,{product_id:product.id,product_name:product.name,emoji:product.emoji,variant,quantity:1,unit_price:variantPrice}]
     })
     setCartOpen(true)
   }
@@ -769,7 +770,7 @@ export default function Home() {
     <>
       <Head>
         <title>Elizabeth & Co. — Artisan Sourdough</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
       </Head>
@@ -889,7 +890,7 @@ export default function Home() {
                     <p className="product-desc">{p.description}</p>
                     {p.variants?.length>0&&(<><p className="variants-label">Style</p><div className="variants">{p.variants.map((v,i)=><button key={v} className={`variant-btn ${(selectedVariants[p.id]||0)===i?'selected':''}`} onClick={()=>setSelectedVariants(prev=>({...prev,[p.id]:i}))}>{v}</button>)}</div></>)}
                     <div className="product-footer">
-                      <span className="product-price">${p.price.toFixed(2)}</span>
+                      <span className="product-price">${(()=>{const vi=selectedVariants[p.id]||0;const v=p.variants?.[vi];return v&&p.variant_prices?.[v]?parseFloat(p.variant_prices[v]).toFixed(2):p.price.toFixed(2)})()}</span>
                       <button className="add-btn" onClick={()=>addToCart(p)}>Add to cart</button>
                     </div>
                   </div>
