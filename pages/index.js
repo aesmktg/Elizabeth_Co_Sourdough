@@ -496,13 +496,17 @@ export default function Home() {
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--charcoal);}
     input,select,textarea,button{font-family:'DM Sans',sans-serif;}
-    .nav{background:var(--warm-white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:72px;position:sticky;top:0;z-index:100;}
-    .nav-logo{cursor:pointer;display:flex;align-items:center;}
-    .nav-logo img{height:48px;width:auto;object-fit:contain;}
-    .nav-links{display:flex;gap:2rem;}
-    .nav-link{font-size:14px;color:var(--mid);cursor:pointer;padding:4px 0;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none;}
+    .nav{background:var(--warm-white);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+    .nav-logo{cursor:pointer;display:flex;align-items:center;flex-shrink:0;}
+    .nav-logo img{height:44px;width:auto;object-fit:contain;}
+    .nav-links{display:flex;gap:1.5rem;}
+    .nav-link{font-size:14px;color:var(--mid);cursor:pointer;padding:4px 0;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;}
     .nav-link:hover,.nav-link.active{color:var(--charcoal);border-bottom-color:var(--sage);}
-    .nav-right{display:flex;gap:12px;align-items:center;}
+    .nav-right{display:flex;gap:8px;align-items:center;}
+    .nav-right .btn-ghost{display:none;}
+    .nav-right .btn-primary{display:none;}
+    .nav-mobile-menu{display:none;}
+    @media(min-width:601px){.nav-right .btn-ghost{display:flex;}.nav-right .btn-primary{display:flex;}}
     .points-pill{background:var(--gold-light);border:1px solid rgba(196,151,58,0.25);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:500;color:#8A5E10;display:flex;align-items:center;gap:5px;cursor:pointer;}
     .btn-ghost{font-size:13px;font-weight:500;color:var(--mid);background:none;border:1px solid var(--border-strong);border-radius:8px;padding:8px 16px;cursor:pointer;transition:all 0.2s;}
     .btn-ghost:hover{background:var(--cream);}
@@ -739,6 +743,18 @@ export default function Home() {
     .footer-admin-link{font-size:11px;color:var(--border-strong);cursor:pointer;margin-top:0.5rem;display:inline-block;letter-spacing:0.05em;}
     .footer-admin-link:hover{color:var(--mid);}
     @media(max-width:768px){.checkout-layout{grid-template-columns:1fr;}.account-layout{grid-template-columns:1fr;}.admin-layout{grid-template-columns:1fr;}.admin-stats{grid-template-columns:repeat(2,1fr);}.fulfillment-opts{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.nav-links{gap:1rem;}}
+    @media(max-width:600px){.nav{padding:0 1rem;height:60px;}.nav-logo img{height:38px;}.nav-links{display:none;}.nav-right .btn-ghost{display:none!important;}.nav-right .btn-primary{display:none!important;}.nav-right .points-pill{display:none;}.mobile-acct-btn{display:flex!important;}.mobile-signin-btn{display:block!important;}.nav-right{gap:8px;}}
+    @media(max-width:600px){
+      .nav{padding:0 1rem;height:60px;}
+      .nav-logo img{height:38px;}
+      .nav-links{display:none;}
+      .nav-right .btn-ghost{display:none!important;}
+      .nav-right .btn-primary{display:none!important;}
+      .nav-right .points-pill{display:none;}
+      .mobile-acct-btn{display:flex!important;}
+      .mobile-signin-btn{display:block!important;}
+      .nav-right{gap:8px;}
+    }
   `
 
   const pwChecks = [
@@ -794,6 +810,17 @@ export default function Home() {
           <div className="cart-btn" onClick={()=>setCartOpen(true)}>
             🛒<span className="cart-badge">{cart.reduce((s,i)=>s+i.quantity,0)}</span>
           </div>
+          {/* Mobile: account icon */}
+          {customer&&(
+            <div style={{display:'none'}} className="mobile-acct-btn" onClick={()=>setView('account')}>
+              <div style={{width:32,height:32,borderRadius:'50%',background:'var(--sage-light)',border:'1px solid var(--sage)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:13,fontWeight:500,color:'var(--sage-dark)',flexShrink:0}}>
+                {customer.firstName?.[0]}{customer.lastName?.[0]}
+              </div>
+            </div>
+          )}
+          {!customer&&(
+            <button className="mobile-signin-btn" style={{display:'none',background:'var(--sage)',color:'white',border:'none',borderRadius:8,padding:'7px 12px',fontSize:13,fontWeight:500,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}} onClick={()=>openAuth('signin')}>Sign in</button>
+          )}
         </div>
       </nav>
 
@@ -855,7 +882,7 @@ export default function Home() {
             <div className="products-grid">
               {filteredProducts.map(p=>(
                 <div key={p.id} className="product-card">
-                  <div className="product-img">{p.emoji}</div>
+                  <div className="product-img" style={{padding:0,overflow:"hidden"}}>{p.image_url ? <img src={p.image_url} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} /> : <span style={{fontSize:52}}>{p.emoji}</span>}</div>
                   <div className="product-body">
                     <p className="product-category">{p.category==='sourdough'?'Artisan Sourdough':p.category==='cookies'?'Sourdough Cookies':'Accessories'}</p>
                     <p className="product-name">{p.name}</p>
