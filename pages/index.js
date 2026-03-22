@@ -337,11 +337,13 @@ export default function Home() {
     if (!file) return null
     setImageUploading(true)
     try {
-      const result = await api('admin', { action:'get_upload_url', filename: file.name, contentType: file.type })
-      if (result.error) { alert('Upload failed: ' + result.error); setImageUploading(false); return null }
-      await fetch(result.uploadUrl, { method:'PUT', body: file, headers:{ 'Content-Type': file.type } })
+      const ext = file.name.split('.').pop()
+      const path = `products/${Date.now()}.${ext}`
+      const { data, error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true, contentType: file.type })
+      if (error) { alert('Upload failed: ' + error.message); setImageUploading(false); return null }
+      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path)
       setImageUploading(false)
-      return result.publicUrl
+      return urlData.publicUrl
     } catch(e) {
       console.error(e); setImageUploading(false); return null
     }
@@ -1192,16 +1194,46 @@ export default function Home() {
               {adminTab==='dashboard'&&(
                 <>
                   <h2 className="admin-section-title">Dashboard</h2>
+                  <p style={{fontSize:12,color:'var(--mid)',marginBottom:'1.25rem',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Revenue</p>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:'1.5rem'}}>
-                    {[{label:'MTD Revenue',val:dashStats?`$${dashStats.mtd.revenue.toFixed(2)}`:'—',sub:`${dashStats?.mtd.orders||0} orders`},{label:'YTD Revenue',val:dashStats?`$${dashStats.ytd.revenue.toFixed(2)}`:'—',sub:`${dashStats?.ytd.orders||0} orders`},{label:'All-Time Revenue',val:dashStats?`$${dashStats.allTime.revenue.toFixed(2)}`:'—',sub:`${dashStats?.allTime.orders||0} total orders`}].map(s=>(
-                      <div key={s.label} className="admin-stat"><div className="admin-stat-label">{s.label}</div><div className="admin-stat-val" style={{fontSize:22}}>{s.val}</div><div className="admin-stat-sub">{s.sub}</div></div>
+                    {[
+                      {label:'MTD Revenue',val:dashStats?`$${dashStats.mtd.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.mtd.orders||0} orders this month`},
+                      {label:'YTD Revenue',val:dashStats?`$${dashStats.ytd.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.ytd.orders||0} orders this year`},
+                      {label:'All-Time Revenue',val:dashStats?`$${dashStats.allTime.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.allTime.orders||0} total orders`}
+                    ].map(s=>(
+                      <div key={s.label} className="admin-stat">
+                        <div className="admin-stat-label">{s.label}</div>
+                        <div className="admin-stat-val" style={{fontSize:24,fontFamily:'Cormorant Garamond,serif'}}>{s.val}</div>
+                        <div className="admin-stat-sub">{s.sub}</div>
+                      </div>
                     ))}
                   </div>
-                  <div className="admin-stats">
-                    <div className="admin-stat"><div className="admin-stat-label">Customers</div><div className="admin-stat-val">{adminCustomers.length||'—'}</div><div className="admin-stat-sub">Total registered</div></div>
+                  <p style={{fontSize:12,color:'var(--mid)',marginBottom:'1.25rem',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Orders</p>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:'1.5rem'}}>
+                    {[
+                      {label:'MTD Orders',val:dashStats?.mtd.orders||0,sub:'This month'},
+                      {label:'YTD Orders',val:dashStats?.ytd.orders||0,sub:'This year'},
+                      {label:'All-Time Orders',val:dashStats?.allTime.orders||0,sub:'Total placed'}
+                    ].map(s=>(
+                      <div key={s.label} className="admin-stat">
+                        <div className="admin-stat-label">{s.label}</div>
+                        <div className="admin-stat-val" style={{fontFamily:'Cormorant Garamond,serif'}}>{s.val}</div>
+                        <div className="admin-stat-sub">{s.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{fontSize:12,color:'var(--mid)',marginBottom:'1.25rem',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Operations</p>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:'1.5rem'}}>
+                    <div className="admin-stat"><div className="admin-stat-label">Total Customers</div><div className="admin-stat-val">{adminCustomers.length||'—'}</div><div className="admin-stat-sub">Registered accounts</div></div>
                     <div className="admin-stat"><div className="admin-stat-label">Open Orders</div><div className="admin-stat-val">{adminOrders.length||'—'}</div><div className="admin-stat-sub">Current bake day</div></div>
-                    <div className="admin-stat"><div className="admin-stat-label">Promo Codes</div><div className="admin-stat-val">{promoCodes.filter(p=>p.is_active).length||'—'}</div><div className="admin-stat-sub">Active codes</div></div>
-                    <div className="admin-stat"><div className="admin-stat-label">Pending Requests</div><div className="admin-stat-val">{customRequests.filter(r=>r.status==='pending').length||'—'}</div><div className="admin-stat-sub">Awaiting response</div></div>
+                    <div className="admin-stat"><div className="admin-stat-label">Active Promos</div><div className="admin-stat-val">{promoCodes.filter(p=>p.is_active).length||'0'}</div><div className="admin-stat-sub">Live promo codes</div></div>
+                    <div className="admin-stat"><div className="admin-stat-label">Pending Requests</div><div className="admin-stat-val">{customRequests.filter(r=>r.status==='pending').length||'0'}</div><div className="admin-stat-sub">Awaiting response</div></div>
+                  </div>
+                  <p style={{fontSize:12,color:'var(--mid)',marginBottom:'1.25rem',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Rewards</p>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+                    <div className="admin-stat"><div className="admin-stat-label">Points Outstanding</div><div className="admin-stat-val">{adminCustomers.reduce((s,c)=>s+(c.points||0),0)}</div><div className="admin-stat-sub">Across all customers</div></div>
+                    <div className="admin-stat"><div className="admin-stat-label">Customers w/ Points</div><div className="admin-stat-val">{adminCustomers.filter(c=>c.points>0).length}</div><div className="admin-stat-sub">Have earned rewards</div></div>
+                    <div className="admin-stat" style={{background:'var(--gold-light)'}}><div className="admin-stat-label" style={{color:'#7A5A10'}}>Max $ Liability</div><div className="admin-stat-val" style={{color:'#7A5A10'}}>~${(adminCustomers.reduce((s,c)=>s+(c.points||0),0)/20).toFixed(0)}</div><div className="admin-stat-sub" style={{color:'#8A6020'}}>Points redemption risk</div></div>
                   </div>
                 </>
               )}
@@ -1389,37 +1421,161 @@ export default function Home() {
 
               {adminTab==='reports'&&(
                 <>
-                  <h2 className="admin-section-title">Reports</h2>
-                  <div style={{background:'var(--cream)',borderRadius:10,padding:'12px 14px',marginBottom:'1.5rem',fontSize:13,color:'var(--mid)'}}>Reports populate as orders come in. Use the 🖨️ Print button on any report to save as PDF.</div>
-                  <div style={{marginBottom:'2rem'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
-                      <h3 style={{fontSize:18,fontWeight:500}}>Revenue Summary</h3>
-                      <button className="print-btn" onClick={()=>window.print()}>🖨️ Print / Save PDF</button>
-                    </div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem'}}>
+                    <h2 className="admin-section-title" style={{margin:0}}>Reports & Analytics</h2>
+                    <button className="print-btn" onClick={()=>window.print()}>🖨️ Print / Save PDF</button>
+                  </div>
+                  <div style={{background:'var(--cream)',borderRadius:10,padding:'10px 14px',marginBottom:'1.5rem',fontSize:12,color:'var(--mid)'}}>All reports are based on live data. Use Print / Save PDF to export any section.</div>
+
+                  {/* Revenue */}
+                  <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem',marginBottom:'1.25rem'}}>
+                    <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>📈 Revenue Overview</h3>
                     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
                       {[{label:'This Month',val:dashStats?`$${dashStats.mtd.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.mtd.orders||0} orders`},{label:'This Year',val:dashStats?`$${dashStats.ytd.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.ytd.orders||0} orders`},{label:'All Time',val:dashStats?`$${dashStats.allTime.revenue.toFixed(2)}`:'$0.00',sub:`${dashStats?.allTime.orders||0} orders`}].map(s=>(
                         <div key={s.label} className="admin-stat"><div className="admin-stat-label">{s.label}</div><div className="admin-stat-val" style={{fontSize:22}}>{s.val}</div><div className="admin-stat-sub">{s.sub}</div></div>
                       ))}
                     </div>
+                    {dashStats&&dashStats.allTime.orders>0&&(
+                      <div style={{marginTop:'1rem',paddingTop:'1rem',borderTop:'1px solid var(--border)',display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:14}}>
+                        <div className="admin-stat"><div className="admin-stat-label">Avg Order Value</div><div className="admin-stat-val" style={{fontSize:22}}>${dashStats.allTime.orders>0?(dashStats.allTime.revenue/dashStats.allTime.orders).toFixed(2):'0.00'}</div></div>
+                        <div className="admin-stat"><div className="admin-stat-label">Avg Orders / Month</div><div className="admin-stat-val" style={{fontSize:22}}>{dashStats.ytd.orders>0?(dashStats.ytd.orders/new Date().getMonth()+1||1).toFixed(1):'0'}</div></div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{marginBottom:'2rem'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
-                      <h3 style={{fontSize:18,fontWeight:500}}>Customer Summary</h3>
+
+                  {/* Best Sellers */}
+                  <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem',marginBottom:'1.25rem'}}>
+                    <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>🍞 Best Sellers — Current Bake Day</h3>
+                    {(()=>{
+                      const totals={}
+                      adminOrders.forEach(o=>o.order_items?.forEach(i=>{
+                        const k=i.product_name+(i.variant?' ('+i.variant+')':'')
+                        totals[k]=(totals[k]||0)+i.quantity
+                      }))
+                      const sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1])
+                      const max=sorted[0]?.[1]||1
+                      return sorted.length>0?(
+                        <div>
+                          {sorted.map(([name,qty])=>(
+                            <div key={name} style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+                              <div style={{fontSize:13,fontWeight:500,minWidth:200}}>{name}</div>
+                              <div style={{flex:1,background:'var(--cream)',borderRadius:4,height:20,overflow:'hidden'}}>
+                                <div style={{width:`${(qty/max)*100}%`,background:'var(--sage)',height:'100%',borderRadius:4,transition:'width 0.5s'}}></div>
+                              </div>
+                              <div style={{fontSize:13,fontWeight:500,minWidth:30,textAlign:'right'}}>{qty}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ):<p style={{color:'var(--mid)',fontSize:13}}>No orders yet for this bake day.</p>
+                    })()}
+                  </div>
+
+                  {/* Fulfillment & Payment */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:'1.25rem'}}>
+                    <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem'}}>
+                      <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>🚗 Pickup vs Delivery</h3>
+                      {(()=>{
+                        const pickup=adminOrders.filter(o=>o.fulfillment_type==='pickup').length
+                        const delivery=adminOrders.filter(o=>o.fulfillment_type==='delivery').length
+                        const total=pickup+delivery||1
+                        return(
+                          <div>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13}}><span>🧺 Pickup</span><strong>{pickup} ({Math.round(pickup/total*100)}%)</strong></div>
+                            <div style={{background:'var(--cream)',borderRadius:4,height:20,marginBottom:12,overflow:'hidden'}}>
+                              <div style={{width:`${pickup/total*100}%`,background:'var(--sage)',height:'100%',borderRadius:4}}></div>
+                            </div>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:13}}><span>🚗 Delivery</span><strong>{delivery} ({Math.round(delivery/total*100)}%)</strong></div>
+                            <div style={{background:'var(--cream)',borderRadius:4,height:20,overflow:'hidden'}}>
+                              <div style={{width:`${delivery/total*100}%`,background:'var(--earth)',height:'100%',borderRadius:4}}></div>
+                            </div>
+                          </div>
+                        )
+                      })()}
                     </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+                    <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem'}}>
+                      <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>💳 Payment Methods</h3>
+                      {(()=>{
+                        const methods={}
+                        adminOrders.forEach(o=>{methods[o.payment_method]=(methods[o.payment_method]||0)+1})
+                        const total=adminOrders.length||1
+                        return Object.entries(methods).sort((a,b)=>b[1]-a[1]).map(([method,count])=>(
+                          <div key={method} style={{marginBottom:10}}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,fontSize:13}}><span style={{textTransform:'capitalize'}}>{method}</span><strong>{count} ({Math.round(count/total*100)}%)</strong></div>
+                            <div style={{background:'var(--cream)',borderRadius:4,height:14,overflow:'hidden'}}>
+                              <div style={{width:`${count/total*100}%`,background:'var(--charcoal)',height:'100%',borderRadius:4}}></div>
+                            </div>
+                          </div>
+                        ))
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Delivery City Heatmap */}
+                  <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem',marginBottom:'1.25rem'}}>
+                    <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>📍 Order Volume by City</h3>
+                    {(()=>{
+                      const cities={}
+                      adminOrders.forEach(o=>{
+                        const city=o.fulfillment_type==='delivery'?(o.delivery_city||'Unknown'):'Yucaipa (Pickup)'
+                        cities[city]=(cities[city]||0)+1
+                      })
+                      const sorted=Object.entries(cities).sort((a,b)=>b[1]-a[1])
+                      const max=sorted[0]?.[1]||1
+                      const heatColors=['#2D5A27','#4A7C59','#6B7C5C','#8B9E7A','#AABF9A','#C8D8B8']
+                      return sorted.length>0?(
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))',gap:10}}>
+                          {sorted.map(([city,count],i)=>(
+                            <div key={city} style={{background:heatColors[Math.min(i,heatColors.length-1)],borderRadius:10,padding:'1rem',color:'white',textAlign:'center'}}>
+                              <div style={{fontSize:22,fontWeight:300,fontFamily:'Cormorant Garamond,serif'}}>{count}</div>
+                              <div style={{fontSize:12,opacity:0.9,marginTop:2}}>{city}</div>
+                              <div style={{fontSize:11,opacity:0.7}}>{Math.round(count/max*100)}% of orders</div>
+                            </div>
+                          ))}
+                        </div>
+                      ):<p style={{color:'var(--mid)',fontSize:13}}>No order location data yet.</p>
+                    })()}
+                  </div>
+
+                  {/* Customer Report */}
+                  <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem',marginBottom:'1.25rem'}}>
+                    <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>👥 Customer Insights</h3>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:'1rem'}}>
                       <div className="admin-stat"><div className="admin-stat-label">Total Customers</div><div className="admin-stat-val">{adminCustomers.length}</div></div>
-                      <div className="admin-stat"><div className="admin-stat-label">With Points</div><div className="admin-stat-val">{adminCustomers.filter(c=>c.points>0).length}</div></div>
-                      <div className="admin-stat"><div className="admin-stat-label">Total Pts Outstanding</div><div className="admin-stat-val" style={{fontSize:22}}>{adminCustomers.reduce((s,c)=>s+(c.points||0),0)}</div></div>
+                      <div className="admin-stat"><div className="admin-stat-label">With Points</div><div className="admin-stat-val">{adminCustomers.filter(c=>c.points>0).length}</div><div className="admin-stat-sub">{adminCustomers.length>0?Math.round(adminCustomers.filter(c=>c.points>0).length/adminCustomers.length*100):0}% engagement</div></div>
+                      <div className="admin-stat"><div className="admin-stat-label">Total Pts Outstanding</div><div className="admin-stat-val">{adminCustomers.reduce((s,c)=>s+(c.points||0),0)}</div></div>
+                      <div className="admin-stat" style={{background:'var(--gold-light)'}}><div className="admin-stat-label" style={{color:'#7A5A10'}}>Max Redemption Risk</div><div className="admin-stat-val" style={{color:'#7A5A10',fontSize:22}}>${(adminCustomers.reduce((s,c)=>s+(c.points||0),0)/20).toFixed(0)}</div></div>
+                    </div>
+                    <h4 style={{fontSize:14,fontWeight:500,marginBottom:'0.75rem',color:'var(--mid)'}}>Top Customers by Points</h4>
+                    <div className="admin-table">
+                      <div className="admin-table-head"><span className="col-wide">Customer</span><span className="col-med">Phone</span><span className="col-sm">Points</span></div>
+                      {[...adminCustomers].sort((a,b)=>(b.points||0)-(a.points||0)).slice(0,5).map(c=>(
+                        <div key={c.id} className="admin-table-row">
+                          <span className="col-wide">{c.first_name} {c.last_name}</span>
+                          <span className="col-med">{c.phone}</span>
+                          <span className="col-sm" style={{color:'#8A5E10',fontWeight:600}}>{c.points||0} pts</span>
+                        </div>
+                      ))}
+                      {adminCustomers.length===0&&<div style={{padding:'1rem',textAlign:'center',color:'var(--mid)',fontSize:13}}>No customers yet.</div>}
                     </div>
                   </div>
-                  <div style={{marginBottom:'1.5rem'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
-                      <h3 style={{fontSize:18,fontWeight:500}}>Pickup vs Delivery</h3>
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:14}}>
-                      <div className="admin-stat"><div className="admin-stat-label">🧺 Pickup Orders</div><div className="admin-stat-val">{adminOrders.filter(o=>o.fulfillment_type==='pickup').length}</div><div className="admin-stat-sub">Current bake day</div></div>
-                      <div className="admin-stat"><div className="admin-stat-label">🚗 Delivery Orders</div><div className="admin-stat-val">{adminOrders.filter(o=>o.fulfillment_type==='delivery').length}</div><div className="admin-stat-sub">Current bake day</div></div>
-                    </div>
+
+                  {/* Promo Code Performance */}
+                  <div style={{background:'white',border:'1px solid var(--border)',borderRadius:12,padding:'1.5rem',marginBottom:'1.25rem'}}>
+                    <h3 style={{fontSize:16,fontWeight:500,marginBottom:'1rem'}}>🏷️ Promo Code Performance</h3>
+                    {promoCodes.length>0?(
+                      <div className="admin-table">
+                        <div className="admin-table-head"><span className="col-wide">Code</span><span className="col-sm">Type</span><span className="col-sm">Value</span><span className="col-sm">Uses</span><span className="col-sm">Status</span></div>
+                        {promoCodes.map(p=>(
+                          <div key={p.id} className="admin-table-row">
+                            <span className="col-wide" style={{fontFamily:'monospace',fontWeight:600}}>{p.code}</span>
+                            <span className="col-sm">{p.type==='percent'?'%':'$'} off</span>
+                            <span className="col-sm">{p.type==='percent'?`${p.value}%`:`$${p.value}`}</span>
+                            <span className="col-sm">{p.use_count} / {p.max_uses||'∞'}</span>
+                            <span className="col-sm"><span className={`status-pill ${p.is_active?'paid':'unfulfilled'}`}>{p.is_active?'Active':'Expired'}</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    ):<p style={{color:'var(--mid)',fontSize:13}}>No promo codes created yet.</p>}
                   </div>
                 </>
               )}
