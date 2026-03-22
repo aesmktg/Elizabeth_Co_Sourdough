@@ -209,5 +209,31 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true })
   }
 
+  // ── ADMIN SET PASSWORD MANUALLY ──────────────────────────────
+  if (action === 'admin_set_password') {
+    const { customerId, newPassword } = req.body
+
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters' })
+    }
+
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id, first_name')
+      .eq('id', customerId)
+      .single()
+
+    if (!customer) return res.status(404).json({ error: 'Customer not found' })
+
+    const hashed = await bcrypt.hash(newPassword, 12)
+
+    await supabase
+      .from('customers')
+      .update({ password_hash: hashed, requires_password_change: false })
+      .eq('id', customer.id)
+
+    return res.status(200).json({ success: true })
+  }
+
   return res.status(400).json({ error: 'Invalid action' })
 }
