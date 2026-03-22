@@ -675,6 +675,22 @@ export default function Home() {
     .admin-nav-item{padding:10px 1.5rem;font-size:14px;color:var(--mid);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.2s;background:none;border:none;width:100%;text-align:left;}
     .admin-nav-item:hover{background:var(--cream);color:var(--charcoal);}
     .admin-nav-item.active{background:var(--sage-light);color:var(--sage-dark);font-weight:500;}
+    @media(max-width:600px){
+      .admin-layout{grid-template-columns:1fr;}
+      .admin-sidebar{border-right:none;border-bottom:1px solid var(--border);padding:0.5rem 0;display:flex;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;}
+      .admin-nav-item{padding:10px 14px;flex-shrink:0;width:auto;font-size:13px;border-radius:8px;margin:0 2px;}
+      .admin-nav-item.active{background:var(--sage-light);}
+      .badge-red{font-size:9px;padding:1px 4px;}
+      .admin-content{padding:1rem;}
+      .admin-section-title{font-size:22px;margin-bottom:1rem;}
+      .admin-stats{grid-template-columns:repeat(2,1fr)!important;}
+      .pts-risk-grid{grid-template-columns:1fr!important;}
+      .report-grid{grid-template-columns:1fr!important;}
+      .badge-red{font-size:9px;padding:1px 4px;}
+      .admin-content{padding:1rem;}
+      .admin-section-title{font-size:22px;margin-bottom:1rem;}
+      .admin-stats{grid-template-columns:repeat(2,1fr)!important;}
+    }
     .badge-red{background:#E74C3C;color:white;border-radius:10px;font-size:10px;padding:2px 6px;font-weight:600;margin-left:auto;}
     .admin-content{padding:2rem;background:var(--warm-white);}
     .admin-section-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;margin-bottom:1.5rem;}
@@ -688,10 +704,19 @@ export default function Home() {
     .admin-table-row{padding:13px 1.25rem;display:flex;gap:.75rem;border-bottom:1px solid var(--border);font-size:14px;align-items:center;}
     .admin-table-row:last-child{border-bottom:none;}
     .admin-table-row:hover{background:var(--cream);}
-    .col-wide{flex:2.5;font-weight:500;min-width:0;}
-    .col-med{flex:1.5;color:var(--mid);min-width:0;font-size:13px;}
+    .col-wide{flex:2.5;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+    .col-med{flex:1.5;color:var(--mid);min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;}
     .col-sm{flex:1;color:var(--mid);min-width:0;font-size:13px;}
     .col-act{flex:1.2;display:flex;gap:6px;justify-content:flex-end;align-items:center;flex-shrink:0;}
+    @media(max-width:600px){
+      .admin-table-head{display:none;}
+      .admin-table-row{flex-direction:column;align-items:flex-start;gap:6px;padding:14px 1rem;}
+      .col-wide{flex:none;width:100%;font-size:15px;}
+      .col-med{flex:none;width:100%;font-size:13px;}
+      .col-sm{flex:none;font-size:12px;}
+      .col-act{width:100%;justify-content:flex-start;margin-top:4px;}
+      .tbl-btn{padding:6px 14px;font-size:12px;}
+    }
     .tbl-btn{font-size:11px;border:1px solid var(--border-strong);background:none;border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--charcoal);white-space:nowrap;}
     .tbl-btn.blue{border-color:var(--sage);color:var(--sage-dark);background:var(--sage-light);}
     .tbl-btn.red{border-color:#C0392B;color:#C0392B;}
@@ -1367,16 +1392,13 @@ export default function Home() {
                 <>
                   <h2 className="admin-section-title">Customers</h2>
                   <div className="admin-table">
-                    <div className="admin-table-head"><span className="col-wide">Name</span><span className="col-med">Phone</span><span className="col-sm">Points</span><span className="col-sm">Orders</span><span className="col-act"></span></div>
+                    <div className="admin-table-head"><span className="col-wide">Customer</span><span className="col-sm">Points</span><span className="col-act"></span></div>
                     {adminCustomers.map(c=>(
                       <div key={c.id} className="admin-table-row">
-                        <span className="col-wide">{c.first_name} {c.last_name}</span>
-                        <span className="col-med">{c.phone}</span>
-                        <span className="col-sm" style={{color:'#8A5E10',fontWeight:500}}>{c.points||0}</span>
-                        <span className="col-sm">—</span>
+                        <span className="col-wide">{c.first_name} {c.last_name}<br/><span style={{fontSize:12,color:'var(--mid)',fontWeight:400}}>{c.phone}</span></span>
+                        <span className="col-sm" style={{color:'#8A5E10',fontWeight:500}}>{c.points||0} pts</span>
                         <span className="col-act">
                           <button className="tbl-btn blue" onClick={()=>openEditCustomer(c)}>Edit</button>
-                          <button className="tbl-btn" onClick={()=>adminResetPassword(c.id)}>Reset pwd</button>
                         </span>
                       </div>
                     ))}
@@ -1404,7 +1426,7 @@ export default function Home() {
                     <div className="admin-table-head"><span className="col-wide">Code</span><span className="col-sm">Type</span><span className="col-sm">Value</span><span className="col-med">Expires</span><span className="col-sm">Uses</span><span className="col-sm">Status</span><span className="col-act"></span></div>
                     {promoCodes.map(p=>(
                       <div key={p.id} className="admin-table-row">
-                        <span className="col-wide" style={{fontFamily:'monospace',fontWeight:600}}>{p.code}</span>
+                        <span className="col-wide" style={{fontFamily:'monospace',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:120}}>{p.code}</span>
                         <span className="col-sm">{p.type==='percent'?'%':'$'}</span>
                         <span className="col-sm">{p.type==='percent'?`${p.value}%`:`$${p.value}`}</span>
                         <span className="col-med">{p.end_date||'No expiry'}</span>
@@ -1595,7 +1617,7 @@ export default function Home() {
                         <div className="admin-table-head"><span className="col-wide">Code</span><span className="col-sm">Type</span><span className="col-sm">Value</span><span className="col-sm">Uses</span><span className="col-sm">Status</span></div>
                         {promoCodes.map(p=>(
                           <div key={p.id} className="admin-table-row">
-                            <span className="col-wide" style={{fontFamily:'monospace',fontWeight:600}}>{p.code}</span>
+                            <span className="col-wide" style={{fontFamily:'monospace',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.code}</span>
                             <span className="col-sm">{p.type==='percent'?'%':'$'} off</span>
                             <span className="col-sm">{p.type==='percent'?`${p.value}%`:`$${p.value}`}</span>
                             <span className="col-sm">{p.use_count} / {p.max_uses||'∞'}</span>
@@ -1915,7 +1937,7 @@ export default function Home() {
             <div className="form-group"><label className="form-label">Phone</label><input className="form-input" value={editCustomerForm.phone} onChange={e=>setEditCustomerForm(f=>({...f,phone:e.target.value}))} /></div>
             <div className="form-group"><label className="form-label">Email</label><input className="form-input" value={editCustomerForm.email} onChange={e=>setEditCustomerForm(f=>({...f,email:e.target.value}))} /></div>
             <div className="form-group"><label className="form-label">ZIP code</label><input className="form-input" value={editCustomerForm.zip_code} onChange={e=>setEditCustomerForm(f=>({...f,zip_code:e.target.value}))} /></div>
-            <p style={{fontSize:13,fontWeight:500,color:'var(--mid)',marginBottom:10,marginTop:4,textTransform:'uppercase',letterSpacing:'0.06em',fontSize:11}}>Saved Delivery Address</p>
+            <p style={{fontSize:11,fontWeight:500,color:'var(--mid)',marginBottom:10,marginTop:4,textTransform:'uppercase',letterSpacing:'0.06em'}}>Saved Delivery Address</p>
             <div className="form-group"><label className="form-label">Street</label><input className="form-input" value={editCustomerForm.saved_street} onChange={e=>setEditCustomerForm(f=>({...f,saved_street:e.target.value}))} /></div>
             <div className="form-row">
               <div className="form-group"><label className="form-label">City</label>
@@ -1925,9 +1947,27 @@ export default function Home() {
               </div>
               <div className="form-group"><label className="form-label">ZIP</label><input className="form-input" value={editCustomerForm.saved_zip} onChange={e=>setEditCustomerForm(f=>({...f,saved_zip:e.target.value}))} /></div>
             </div>
+            <div style={{borderTop:'1px solid var(--border)',marginTop:'1rem',paddingTop:'1rem'}}>
+              <p style={{fontSize:11,fontWeight:500,color:'var(--mid)',marginBottom:10,textTransform:'uppercase',letterSpacing:'0.06em'}}>Password Management</p>
+              <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+                <button className="tbl-btn" style={{padding:'8px 14px',fontSize:13}} onClick={()=>adminResetPassword(editingCustomer.id)}>📱 Send Temp Password via SMS</button>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Set New Password Manually</label>
+                <input className="form-input" type="password" value={editCustomerForm.newPassword||''} onChange={e=>setEditCustomerForm(f=>({...f,newPassword:e.target.value}))} placeholder="Enter new password for customer" />
+                <p style={{fontSize:11,color:'var(--mid)',marginTop:4}}>Leave blank to keep current password unchanged.</p>
+              </div>
+            </div>
             <div style={{display:'flex',gap:10,marginTop:4}}>
               <button className="btn-ghost" style={{flex:1}} onClick={()=>setEditCustomerModal(false)}>Cancel</button>
-              <button className="btn-primary" style={{flex:2,padding:'12px'}} onClick={saveCustomer} disabled={editCustomerLoading}>{editCustomerLoading?'Saving...':'Save Changes'}</button>
+              <button className="btn-primary" style={{flex:2,padding:'12px'}} onClick={async()=>{
+                if(editCustomerForm.newPassword) {
+                  if(!confirm(`Set a new password for ${editingCustomer.first_name} ${editingCustomer.last_name}? This will immediately change their login password.`)) return
+                  const pwResult = await api('auth', { action:'admin_set_password', customerId: editingCustomer.id, newPassword: editCustomerForm.newPassword })
+                  if(pwResult.error) { alert('Password change failed: ' + pwResult.error); return }
+                }
+                saveCustomer()
+              }} disabled={editCustomerLoading}>{editCustomerLoading?'Saving...':'Save Changes'}</button>
             </div>
           </div>
         </div>
